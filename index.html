@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPCX Fully Automated Decision Terminal</title>
+    <title>SPCX Pure Signal Terminal</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -17,8 +17,8 @@
             theme: {
                 extend: {
                     colors: {
-                        space: { 950: '#07090E', 900: '#0F141C', 800: '#181F2C', 700: '#232C3D', 600: '#323E54' },
-                        cyanAccent: '#00f2fe', successGreen: '#00e676', dangerRed: '#ff4d4d', warningYellow: '#ffb300'
+                        space: { 950: '#07090E', 900: '#0F141C', 800: '#181F2C', 700: '#232C3D' },
+                        cyanAccent: '#00f2fe', successGreen: '#00e676', dangerRed: '#ff4d4d'
                     },
                     fontFamily: { kanit: ['Kanit', 'sans-serif'], inter: ['Inter', 'sans-serif'] }
                 }
@@ -27,167 +27,105 @@
     </script>
     <style>
         body { font-family: 'Kanit', 'Inter', sans-serif; background-color: #07090E; color: #E2E8F0; }
-        .glow-box { box-shadow: 0 0 25px rgba(0, 242, 254, 0.15); }
-        .glow-red { box-shadow: 0 0 25px rgba(255, 77, 77, 0.2); }
-        .glow-green { box-shadow: 0 0 25px rgba(0, 230, 118, 0.2); }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #07090E; }
-        ::-webkit-scrollbar-thumb { background: #232C3D; border-radius: 3px; }
+        .glow-red { box-shadow: 0 0 30px rgba(255, 77, 77, 0.25); }
+        .glow-green { box-shadow: 0 0 30px rgba(0, 230, 118, 0.25); }
     </style>
 </head>
-<body class="min-h-screen pb-12">
+<body class="min-h-screen flex flex-col justify-center py-10">
 
-    <!-- HEADER -->
-    <header class="bg-space-900/90 border-b border-gray-800 sticky top-0 z-50 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 w-full space-y-6">
+
+        <!-- HEADER SIMPLE -->
+        <div class="flex justify-between items-center bg-space-900 p-4 rounded-2xl border border-gray-800">
             <div class="flex items-center space-x-3">
-                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-cyan-500/20">
-                    <i class="fa-solid fa-robot"></i>
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white text-lg font-bold">
+                    <i class="fa-solid fa-satellite"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-extrabold text-white tracking-wide flex items-center gap-2">
-                        SPCX Fully Automated Terminal <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-normal">Auto Sync</span>
-                    </h1>
-                    <p class="text-xs text-gray-400">ระบบดึงราคาจริงและคำนวณสัญญาณ Call / Put อัตโนมัติ 100%</p>
+                    <h1 class="text-lg font-extrabold text-white">SPCX Signal AI <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Live Auto</span></h1>
+                    <p class="text-xs text-gray-400">ระบบดึงราคาจริง และแนะนำ Call/Put อัตโนมัติ</p>
                 </div>
             </div>
-
-            <div class="flex items-center space-x-3">
-                <div class="flex items-center px-3 py-2 rounded-xl bg-space-950 border border-gray-800 text-xs text-gray-400">
-                    <span id="syncPulse" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping mr-2"></span>
-                    <span id="apiStatusText" class="text-emerald-400 font-bold">Auto Fetching...</span>
-                </div>
+            <div class="flex items-center px-3 py-1.5 rounded-xl bg-space-950 border border-gray-800 text-xs text-gray-400">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping mr-2"></span>
+                <span id="syncText" class="text-emerald-400 font-bold">Auto Sync</span>
             </div>
         </div>
-    </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
-
-        <!-- OVERALL SIGNAL & DECISION BANNER -->
-        <div id="signalBanner" class="bg-gradient-to-r from-space-900 via-space-800 to-space-900 rounded-3xl p-6 border-2 border-emerald-500/60 glow-green relative overflow-hidden transition-all duration-300">
+        <!-- MAIN DECISION BANNER -->
+        <div id="signalBanner" class="bg-gradient-to-r from-space-900 via-space-800 to-space-900 rounded-3xl p-8 border-2 border-emerald-500/60 glow-green relative overflow-hidden transition-all duration-300">
             <div class="flex flex-wrap items-center justify-between gap-6">
-                <div class="space-y-2">
+                <div class="space-y-3">
                     <div class="flex items-center gap-2">
                         <span id="signalTag" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                            <i class="fa-solid fa-circle-dot mr-1 animate-pulse"></i> คำนวณสัญญาณอัตโนมัติ
+                            <i class="fa-solid fa-circle-dot mr-1 animate-pulse"></i> สัญญาณอัตโนมัติ
                         </span>
-                        <span class="text-xs text-gray-400" id="lastSyncTime">ซิงค์ล่าสุด: กำลังเชื่อมต่อ...</span>
+                        <span class="text-xs text-gray-400" id="lastSyncTime">ซิงค์ล่าสุด: กำลังโหลด...</span>
                     </div>
-                    <h2 id="signalTitle" class="text-2xl font-black text-white">กำลังดึงราคาและคำนวณสัญญาณ...</h2>
-                    <p id="signalDesc" class="text-xs text-gray-300 max-w-2xl leading-relaxed">
-                        ระบบกำลังเชื่อมต่อตลาดเพื่อดึงราคา SPCX ล่าสุดมาเทียบกับแนวรับ EMA20 ($154.91)
+                    <h2 id="signalTitle" class="text-3xl font-black text-white">กำลังดึงราคาและคำนวณสัญญาณ...</h2>
+                    <p id="signalDesc" class="text-sm text-gray-300 max-w-xl leading-relaxed">
+                        ระบบกำลังตรวจสอบราคาจริงเทียบกับแนวรับ EMA20 ($154.91)
                     </p>
                 </div>
 
-                <div class="flex items-center gap-5 bg-space-950/80 px-6 py-4 rounded-2xl border border-gray-800/80 backdrop-blur-md">
+                <div class="flex items-center gap-5 bg-space-950/90 px-8 py-5 rounded-2xl border border-gray-800 backdrop-blur-md">
                     <div class="text-right">
-                        <span class="text-xs font-semibold text-gray-400 uppercase block">สัญญาณแนะนำ</span>
-                        <span id="signalText" class="text-xl font-black text-emerald-400">FETCHING</span>
+                        <span class="text-xs font-semibold text-gray-400 uppercase block mb-1">คำแนะนำหลัก</span>
+                        <span id="signalText" class="text-2xl font-black text-emerald-400">FETCHING</span>
                     </div>
-                    <div id="scoreCircle" class="w-16 h-16 rounded-full border-4 border-emerald-500 flex items-center justify-center text-xl font-black text-emerald-400 font-mono shadow-lg shadow-emerald-500/20">
+                    <div id="scoreCircle" class="w-20 h-20 rounded-full border-4 border-emerald-500 flex items-center justify-center text-2xl font-black text-emerald-400 font-mono shadow-lg shadow-emerald-500/20">
                         --
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- AUTOMATED STATS CARDS -->
+        <!-- ACTION CARDS (3 COLUMNS) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div class="bg-space-900 rounded-2xl p-5 border border-gray-800 space-y-3">
+            <!-- LIVE PRICE -->
+            <div class="bg-space-900 rounded-2xl p-6 border border-gray-800 space-y-2">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-chart-line text-cyanAccent mr-1.5"></i> ราคาตลาดล่าสุด (Auto Live)</span>
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-chart-line text-cyanAccent mr-1.5"></i> ราคาหุ้นแม่ปัจจุบัน</span>
                     <span class="text-[10px] px-2 py-0.5 rounded bg-space-800 text-cyan-300 font-mono">NASDAQ:SPCX</span>
                 </div>
-                <div class="text-3xl font-black text-cyanAccent font-mono" id="autoLivePriceDisplay">Loading...</div>
-                <p class="text-xs text-gray-400 border-t border-gray-800/80 pt-2.5" id="autoPriceNote">
-                    เทียบกับแนวรับ EMA20 ($154.91)
+                <div class="text-4xl font-black text-cyanAccent font-mono pt-2" id="autoLivePriceDisplay">Loading...</div>
+                <p class="text-xs text-gray-400 border-t border-gray-800 pt-3 mt-2" id="autoPriceNote">
+                    เทียบกับแนวรับหลัก EMA20 ($154.91)
                 </p>
             </div>
 
-            <div class="bg-space-900 rounded-2xl p-5 border border-gray-800 space-y-3">
+            <!-- TAKE PROFIT -->
+            <div class="bg-space-900 rounded-2xl p-6 border border-gray-800 space-y-2">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider"><i class="fa-solid fa-bullseye mr-1.5"></i> เป้าทำกำไร (Take Profit)</span>
                     <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-mono">Dime! Sell</span>
                 </div>
-                <div class="text-2xl font-black text-emerald-400 font-mono" id="cardTargetZone">$165.00 / $177.15</div>
-                <p class="text-xs text-gray-400 border-t border-gray-800/80 pt-2.5">
-                    กดปุ่ม <strong class="text-white">"ขาย" (Sell to Close)</strong> ในแอป Dime! เมื่อถึงเป้าหมาย
+                <div class="text-3xl font-black text-emerald-400 font-mono pt-2" id="cardTargetZone">$165.00 / $177.15</div>
+                <p class="text-xs text-gray-400 border-t border-gray-800 pt-3 mt-2">
+                    กดปุ่ม <strong class="text-white">"ขาย" (Sell to Close)</strong> ใน Dime!
                 </p>
             </div>
 
-            <div class="bg-space-900 rounded-2xl p-5 border border-gray-800 space-y-3">
+            <!-- STOP LOSS -->
+            <div class="bg-space-900 rounded-2xl p-6 border border-gray-800 space-y-2">
                 <div class="flex items-center justify-between">
                     <span class="text-xs font-bold text-red-400 uppercase tracking-wider"><i class="fa-solid fa-shield-cat mr-1.5"></i> จุดตัดขาดทุน (Stop Loss)</span>
                     <span class="text-[10px] px-2 py-0.5 rounded bg-red-950 text-red-300 font-mono">Risk Control</span>
                 </div>
-                <div class="text-2xl font-black text-red-400 font-mono" id="cardStopZone">หลุดต่ำกว่า $154.00</div>
-                <p class="text-xs text-gray-400 border-t border-gray-800/80 pt-2.5">
-                    หากราคาปิดต่ำกว่าแนวรับ ให้ตัดขาดทุนทันที
+                <div class="text-3xl font-black text-red-400 font-mono pt-2" id="cardStopZone">หลุดต่ำกว่า $154.00</div>
+                <p class="text-xs text-gray-400 border-t border-gray-800 pt-3 mt-2">
+                    หากปิดแท่งหลุดแนวรับ ให้ตัดขาดทุนทันที
                 </p>
-            </div>
-        </div>
-
-        <!-- AUTOMATED OPTIONS PNL CALCULATOR -->
-        <div class="bg-space-900 rounded-2xl p-6 border border-gray-800 shadow-xl space-y-6">
-            <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
-                <i class="fa-solid fa-calculator text-cyanAccent"></i> คำนวณกำไร/ขาดทุน Options อัตโนมัติ (ไม่ต้องกรอกราคาหุ้นแม่)
-            </h3>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <!-- PARAMETER SETTINGS (NO STOCK PRICE INPUT) -->
-                <div class="lg:col-span-6 space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-300 uppercase mb-2">ประเภทสัญญา</label>
-                            <select id="calcOptionType" onchange="recalculateAutoPnL()" class="w-full bg-space-950 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white font-semibold focus:outline-none">
-                                <option value="CALL" selected>CALL Option (มองขึ้น)</option>
-                                <option value="PUT">PUT Option (มองลง)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-gray-300 uppercase mb-2">Strike Price ($)</label>
-                            <input type="number" id="calcStrikePrice" value="160" step="0.5" oninput="recalculateAutoPnL()" class="w-full bg-space-950 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-300 uppercase mb-2">Cost Premium ที่คุณซื้อ ($/หุ้น)</label>
-                        <input type="number" id="calcPremiumCost" value="3.50" step="0.05" oninput="recalculateAutoPnL()" class="w-full bg-space-950 border border-gray-700 rounded-xl px-4 py-3 text-sm text-white font-mono focus:outline-none">
-                    </div>
-                    <p class="text-[11px] text-gray-400">
-                        * ราคาหุ้นแม่จะถูกดึงจากตลาดเข้ามาคำนวณให้อัตโนมัติ คุณตั้งแค่ Strike และ Cost Premium ที่ซื้อมาเท่านั้นครับ
-                    </p>
-                </div>
-
-                <!-- OUTPUT PNL SECTION -->
-                <div class="lg:col-span-6 bg-space-950 p-6 rounded-2xl border border-gray-800 flex flex-col justify-between shadow-inner">
-                    <div>
-                        <span class="text-xs text-gray-400 uppercase tracking-wider block mb-1">ผลคำนวณกำไร/ขาดทุนคาดการณ์ (PnL):</span>
-                        <div class="flex items-baseline justify-between mt-2">
-                            <span id="calcPnlUsd" class="text-4xl font-black text-red-400 font-mono">-$350.00</span>
-                            <span id="calcPnlPercent" class="text-2xl font-bold text-red-400 font-mono">(-100.0%)</span>
-                        </div>
-                        <p class="text-sm text-right text-gray-300 mt-3 font-mono border-t border-gray-800 pt-3">
-                            คิดเป็นเงินไทยประมาณ: <span id="calcPnlThb" class="text-red-400 font-bold text-lg">-11,728.50 บาท</span>
-                        </p>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-gray-800/80 text-xs text-gray-400 flex justify-between">
-                        <span>อัตราแลกเปลี่ยน: 1 USD = 33.51 THB</span>
-                        <span class="text-cyan-400 font-semibold">ซิงค์ราคาตลาดอัตโนมัติทุก 15 วินาที</span>
-                    </div>
-                </div>
             </div>
         </div>
 
     </main>
 
     <script>
-        let currentFetchedStockPrice = 156.37; // Default Fallback
+        let currentFetchedPrice = 159.31;
 
-        async function fetchAutoStockPrice() {
-            const statusText = document.getElementById('apiStatusText');
-            
+        async function fetchLivePrice() {
             try {
-                // Use AllOrigins Proxy to bypass Google Sites CORS restrictions & Fetch Yahoo Finance SPCX
                 const targetUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/SPCX?interval=1m&range=1d';
                 const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
@@ -197,34 +135,18 @@
 
                 if (data && data.chart && data.chart.result && data.chart.result[0]) {
                     const meta = data.chart.result[0].meta;
-                    // Extract Regular Market or Post/Pre Market Price
-                    const latestPrice = meta.regularMarketPrice || meta.chartPreviousClose || 156.37;
-                    currentFetchedStockPrice = parseFloat(latestPrice);
-                    
-                    statusText.innerText = "เชื่อมต่อสำเร็จ (Auto Syncing)";
-                    statusText.className = "text-emerald-400 font-bold";
+                    currentFetchedPrice = parseFloat(meta.regularMarketPrice || meta.chartPreviousClose || 159.31);
+                    document.getElementById('syncText').innerText = "Live Syncing";
                     document.getElementById('lastSyncTime').innerText = `ซิงค์ล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
-                } else {
-                    fallbackToCalculatedTick();
                 }
             } catch (err) {
-                console.error("Auto Sync Error, fallback active:", err);
-                fallbackToCalculatedTick();
+                console.error("Sync Error:", err);
             }
 
-            processAutomatedSignal(currentFetchedStockPrice);
+            updateSignalView(currentFetchedPrice);
         }
 
-        function fallbackToCalculatedTick() {
-            const statusText = document.getElementById('apiStatusText');
-            statusText.innerText = "กำลังซิงค์ราคา After-Hours...";
-            statusText.className = "text-cyan-400 font-bold";
-            // Small subtle auto movement fallback if proxy is delayed
-            currentFetchedStockPrice = 156.37;
-            document.getElementById('lastSyncTime').innerText = `อัปเดตระบบ: ${new Date().toLocaleTimeString('th-TH')}`;
-        }
-
-        function processAutomatedSignal(stockPrice) {
+        function updateSignalView(stockPrice) {
             document.getElementById('autoLivePriceDisplay').innerText = `$${stockPrice.toFixed(2)}`;
 
             const banner = document.getElementById('signalBanner');
@@ -233,61 +155,38 @@
             const signalText = document.getElementById('signalText');
             const scoreCircle = document.getElementById('scoreCircle');
 
-            // Compare against EMA20 ($154.91)
             if (stockPrice < 154.91) {
                 // Bearish (PUT)
-                banner.className = "bg-gradient-to-r from-space-900 via-space-800 to-space-900 rounded-3xl p-6 border-2 border-red-500/60 glow-red relative overflow-hidden transition-all duration-300";
+                banner.className = "bg-gradient-to-r from-space-900 via-space-800 to-space-900 rounded-3xl p-8 border-2 border-red-500/60 glow-red relative overflow-hidden transition-all duration-300";
                 signalTitle.innerText = "คำแนะนำหลัก: PUT OPTION (ราคาหลุดแนวรับ EMA20)";
-                signalDesc.innerText = `ราคาตลาดล่าสุด $${stockPrice.toFixed(2)} หลุดต่ำกว่าแนวรับสำคัญ $154.91 โครงสร้างขาขึ้นเสียทรง มีโอกาสไหลลงหา $152.00 และ $150.00`;
+                signalDesc.innerText = `ราคาปัจจุบันอยู่ที่ $${stockPrice.toFixed(2)} หลุดแนวรับสำคัญ $154.91 โครงสร้างขาขึ้นเสียทรง มีโอกาสไหลลงหา $152.00 และ $150.00`;
                 signalText.innerText = "PUT (Bearish)";
-                signalText.className = "text-xl font-black text-red-400";
+                signalText.className = "text-2xl font-black text-red-400";
                 scoreCircle.innerText = "70%";
-                scoreCircle.className = "w-16 h-16 rounded-full border-4 border-red-500 flex items-center justify-center text-xl font-black text-red-400 font-mono shadow-lg shadow-red-500/20";
-                document.getElementById('autoPriceNote').innerText = "หลุดแนวรับสำคัญ 4H - ได้เปรียบฝั่ง Put";
-                document.getElementById('cardStopZone').innerText = "กลับขึ้นยืนเหนือ $155.50";
+                scoreCircle.className = "w-20 h-20 rounded-full border-4 border-red-500 flex items-center justify-center text-2xl font-black text-red-400 font-mono shadow-lg shadow-red-500/20";
+                
+                document.getElementById('cardTargetZone').innerText = "$152.00 / $150.00";
+                document.getElementById('cardStopZone').innerText = "กลับยืนเหนือ $155.50";
+                document.getElementById('autoPriceNote').innerText = "หลุดแนวรับสำคัญ - ได้เปรียบฝั่ง Put";
             } else {
                 // Bullish (CALL)
-                banner.className = "bg-gradient-to-r from-space-900 via-space-800 to-space-900 rounded-3xl p-6 border-2 border-emerald-500/60 glow-green relative overflow-hidden transition-all duration-300";
+                banner.className = "bg-gradient-to-r from-space-900 via-space-800 to-space-900 rounded-3xl p-8 border-2 border-emerald-500/60 glow-green relative overflow-hidden transition-all duration-300";
                 signalTitle.innerText = "คำแนะนำหลัก: CALL OPTION (ประคองตัวเหนือแนวรับ)";
-                signalDesc.innerText = `ราคาตลาดล่าสุด $${stockPrice.toFixed(2)} ยืนเหนือแนวรับหลัก EMA20 ($154.91) ได้ดี มีโอกาสดีดตัวรีบาวด์ทดสอบ $165.00`;
+                signalDesc.innerText = `ราคาปัจจุบันอยู่ที่ $${stockPrice.toFixed(2)} ยืนเหนือแนวรับหลัก EMA20 ($154.91) ได้ดี มีโอกาสดีดตัวรีบาวด์ทดสอบ $165.00`;
                 signalText.innerText = "CALL (Bullish)";
-                signalText.className = "text-xl font-black text-emerald-400";
+                signalText.className = "text-2xl font-black text-emerald-400";
                 scoreCircle.innerText = "75%";
-                scoreCircle.className = "w-16 h-16 rounded-full border-4 border-emerald-500 flex items-center justify-center text-xl font-black text-emerald-400 font-mono shadow-lg shadow-emerald-500/20";
-                document.getElementById('autoPriceNote').innerText = "ยืนเหนือแนวรับ EMA20 ($154.91)";
+                scoreCircle.className = "w-20 h-20 rounded-full border-4 border-emerald-500 flex items-center justify-center text-2xl font-black text-emerald-400 font-mono shadow-lg shadow-emerald-500/20";
+
+                document.getElementById('cardTargetZone').innerText = "$165.00 / $177.15";
                 document.getElementById('cardStopZone').innerText = "หลุดต่ำกว่า $154.00";
+                document.getElementById('autoPriceNote').innerText = "ยืนเหนือแนวรับ EMA20 ($154.91)";
             }
-
-            recalculateAutoPnL();
-        }
-
-        function recalculateAutoPnL() {
-            const stockPrice = currentFetchedStockPrice;
-            const optType = document.getElementById('calcOptionType')?.value || 'CALL';
-            const strike = parseFloat(document.getElementById('calcStrikePrice')?.value || 160);
-            const premium = parseFloat(document.getElementById('calcPremiumCost')?.value || 3.50);
-            const fx = 33.51;
-
-            const totalCostUsd = premium * 100;
-            let currentValPerShare = optType === 'PUT' ? Math.max(0.01, strike - stockPrice) : Math.max(0.01, stockPrice - strike);
-            
-            const totalValUsd = currentValPerShare * 100;
-            const pnlUsd = totalValUsd - totalCostUsd;
-            const pnlPercent = (pnlUsd / totalCostUsd) * 100;
-            const pnlThb = pnlUsd * fx;
-
-            document.getElementById('calcPnlUsd').innerText = `${pnlUsd >= 0 ? '+' : ''}$${pnlUsd.toFixed(2)}`;
-            document.getElementById('calcPnlUsd').className = `text-4xl font-black font-mono ${pnlUsd >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
-            document.getElementById('calcPnlPercent').innerText = `(${pnlPercent.toFixed(1)}%)`;
-            document.getElementById('calcPnlPercent').className = `text-2xl font-bold font-mono ${pnlUsd >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
-            document.getElementById('calcPnlThb').innerText = `${pnlThb >= 0 ? '+' : ''}${pnlThb.toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท`;
-            document.getElementById('calcPnlThb').className = `font-bold text-lg ${pnlThb >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
         }
 
         window.onload = function () {
-            fetchAutoStockPrice();
-            // Auto fetch every 15 seconds
-            setInterval(fetchAutoStockPrice, 15000);
+            fetchLivePrice();
+            setInterval(fetchLivePrice, 15000); // ดึงราคาอัตโนมัติทุก 15 วินาที
         };
     </script>
 </body>
