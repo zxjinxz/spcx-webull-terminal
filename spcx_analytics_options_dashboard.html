@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webull SPCX Pro Trading & Research Web App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js and Financial / Zoom Plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.3.0/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.1.1/dist/chartjs-chart-financial.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        space: { 950: '#07090E', 900: '#0F141C', 800: '#181F2C', 700: '#232C3D', 600: '#323E54' },
+                        webullBlue: '#0066FF', cyanAccent: '#00f2fe', blueAccent: '#4facfe', dangerRed: '#ff4d4d', successGreen: '#00e676', warningYellow: '#ffb300'
+                    },
+                    fontFamily: { kanit: ['Kanit', 'sans-serif'], inter: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Kanit', 'Inter', sans-serif; background-color: #07090E; color: #E2E8F0; }
+        .glow-box { box-shadow: 0 0 20px rgba(0, 242, 254, 0.12); }
+        .glow-red { box-shadow: 0 0 20px rgba(255, 77, 77, 0.15); }
+        .glow-green { box-shadow: 0 0 20px rgba(0, 230, 118, 0.15); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #07090E; }
+        ::-webkit-scrollbar-thumb { background: #232C3D; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #00f2fe; }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <header class="bg-space-900/90 border-b border-gray-800/80 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-cyan-500 to-indigo-600 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-blue-500/20">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white tracking-wide flex items-center gap-2">
+                        Webull SPCX Pro <span id="headerTag" class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-normal">After-Hours $156.85</span>
+                    </h1>
+                    <p class="text-xs text-gray-400">ระบบประมวลผล Webull Live Data & Research Terminal (Single-File Dashboard)</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="flex items-center space-x-1 bg-space-950 p-1.5 rounded-xl border border-gray-800">
+                <button onclick="switchMainTab('terminal')" id="navTerminalBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md">
+                    <i class="fa-solid fa-gauge-high mr-1.5"></i> Trading Terminal
+                </button>
+                <button onclick="switchMainTab('docs')" id="navDocsBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-book-bookmark mr-1.5"></i> คลังรายงานวิเคราะห์
+                </button>
+                <button onclick="switchMainTab('quiz')" id="navQuizBtn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-graduation-cap mr-1.5"></i> แบบทดสอบ Options
+                </button>
+            </div>
+
+            <div class="flex items-center space-x-3 flex-wrap gap-2">
+                <!-- Market Mode Selector -->
+                <div class="flex items-center bg-space-950 p-1 rounded-xl border border-gray-800 space-x-1">
+                    <button onclick="setMarketMode('REGULAR')" id="btnModeRegular" class="px-2.5 py-1 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white">
+                        <i class="fa-solid fa-sun mr-1"></i> Market ($159.31)
+                    </button>
+                    <button onclick="setMarketMode('EXTENDED')" id="btnModeExtended" class="px-2.5 py-1 rounded-lg text-xs font-bold transition bg-indigo-600/50 text-indigo-200 border border-indigo-400/50 shadow-md">
+                        <i class="fa-solid fa-moon mr-1"></i> After-Hours ($156.85)
+                    </button>
+                </div>
+
+                <div class="flex items-center px-3 py-1.5 rounded-xl bg-space-800 border border-gray-700 text-xs">
+                    <span id="socketPulse" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping mr-2"></span>
+                    <span id="sessionBadge" class="font-bold text-emerald-400 mr-2">WEBULL SYNCED</span>
+                    <span id="apiStatusText" class="text-gray-400 border-l border-gray-700 pl-2">FX 1 USD = 33.51 THB</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 space-y-6">
+
+        <div id="tabTerminal" class="space-y-6">
+            <!-- STATUS SUMMARY CARD -->
+            <div class="bg-gradient-to-r from-amber-950/40 via-space-900 to-cyan-950/40 border border-amber-500/50 rounded-2xl p-5 shadow-lg glow-box">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-3 bg-amber-500/20 rounded-xl border border-amber-500/40 text-amber-400 text-2xl animate-pulse">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span id="statusMarketModeLabel" class="text-xs font-bold text-amber-400 tracking-widest uppercase">สถานะราคา Webull After-Hours ($156.85)</span>
+                                <span id="statusTagBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/30 text-amber-300 border border-amber-500/40">TESTING BOTTOM $156.05</span>
+                            </div>
+                            <p class="text-sm font-semibold text-white mt-0.5" id="statusDescriptionText">
+                                ราคาช่วง After-Hours ย่อลงมาแตะฐาน <span class="text-amber-300 font-bold">$156.05</span> แล้วพยายามตั้งฐานที่ <span class="text-cyanAccent font-bold">$156.85</span> โดย RSI ชะลอตัวลงมาที่ <span class="text-yellow-400 font-bold">39.28</span> (ใกล้โซน Oversold)
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="text-right text-xs font-mono">
+                            <span class="text-gray-400 block">แนวรับสำคัญ: <span class="text-yellow-400 font-bold">$156.05 / $155.10</span></span>
+                            <span class="text-gray-400 block">แนวต้านรีบาวด์: <span class="text-cyanAccent font-bold">$157.85 / $159.31</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Stock Price Card -->
+                <div class="md:col-span-2 bg-space-900 rounded-2xl p-5 border border-gray-800 glow-box relative overflow-hidden transition-colors duration-300" id="priceCardBox">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs font-semibold uppercase text-gray-400 tracking-wider">Space Exploration Corp NASDAQ</span>
+                                <span id="marketStatusTag" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 animate-pulse">AFTER-HOURS 19:53 ET</span>
+                            </div>
+                            <div class="flex items-baseline space-x-3 mt-1.5">
+                                <span class="text-4xl font-extrabold text-white tracking-tight transition-all duration-200" id="currentPrice">$156.85</span>
+                                <span class="text-sm font-bold text-red-400 flex items-center transition-all duration-200" id="priceChange">
+                                    ▼ -2.46 (-1.54%)
+                                </span>
+                            </div>
+                            <div class="mt-2 text-xs font-semibold text-amber-300 bg-amber-950/40 border border-amber-500/30 px-2.5 py-1 rounded-lg inline-block" id="overnightBadge">
+                                สถานะตลาด: <span id="sessionNameText" class="text-white font-extrabold">After-Hours Session (Webull)</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-gray-400 block">RSI (14)</span>
+                            <span class="text-sm font-bold text-amber-400" id="marketCap">39.28 (Oversold)</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-gray-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-gray-400">
+                        <div>จุดต่ำสุด (Low): <span class="text-amber-400 font-medium block" id="dispLowVal">$156.05</span></div>
+                        <div>EMA5: <span class="text-cyan-400 font-medium block" id="dispEma5Val">$157.15</span></div>
+                        <div>EMA10: <span class="text-yellow-400 font-medium block" id="dispEma10Val">$157.85</span></div>
+                        <div>EMA20: <span class="text-purple-400 font-medium block" id="dispEma20Val">$158.74</span></div>
+                    </div>
+                </div>
+
+                <!-- Position Valuation Card (Put 140) -->
+                <div id="positionValCard" class="bg-space-900 rounded-2xl p-5 border border-red-900/60 glow-red">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-semibold uppercase text-gray-400 tracking-wider"> Put $140 (OTM)</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-red-500/20 text-red-400 font-bold border border-red-500/30">DEEP OTM</span>
+                    </div>
+                    <div class="mt-2">
+                        <span class="text-2xl font-bold text-red-500" id="putEstVal">$1.00 - $3.00 USD</span>
+                        <span class="text-xs text-red-400 block mt-0.5 font-medium" id="putPercentVal">($0.01 - $0.03 / หุ้น)</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-3 pt-2 border-t border-gray-800/80">
+                        คำแนะนำ: <span class="text-red-400 font-bold">ราคา $156.85 สูงกว่า Strike $140 ถึง $16.85</span> แนะนำ Cut Loss
+                    </p>
+                </div>
+
+                <!-- Call Strategy Card -->
+                <div class="bg-space-900 rounded-2xl p-5 border border-emerald-800/60 glow-green">
+                    <span class="text-xs font-semibold uppercase text-emerald-400 tracking-wider"> CALL Option (จุดสะสม)</span>
+                    <div class="mt-2">
+                        <span class="text-2xl font-bold text-emerald-400" id="breakevenVal">Strike $155 / $160</span>
+                        <span class="text-xs text-emerald-300 block mt-0.5" id="breakevenDesc">โซนสะสม $156.05 – $157.15</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-3 pt-2 border-t border-gray-800/80">
+                        เป้าทำกำไร: <span class="text-cyanAccent font-bold" id="diffBreakeven">$158.74 / $161.70 / $166.18</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- STRATEGY ENGINE -->
+            <div class="bg-gradient-to-r from-space-900 via-space-800 to-space-900 rounded-2xl p-6 border-2 border-amber-500/50 glow-box relative overflow-hidden">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-800/80 pb-4 mb-4">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-black tracking-widest uppercase bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse">
+                            <i class="fa-solid fa-robot mr-1"></i> Strategy Execution Plan
+                        </span>
+                        <h2 class="text-lg font-extrabold text-white">แผนกลยุทธ์รับมือการย่อตัวสุดที่ $156.05</h2>
+                    </div>
+
+                    <div class="flex items-center bg-space-950 p-1 rounded-xl border border-gray-800 space-x-1">
+                        <button onclick="switchTimeframe('1D')" id="tfBtn1D" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md">
+                            <i class="fa-solid fa-bolt mr-1"></i> 1 วัน (Intraday)
+                        </button>
+                        <button onclick="switchTimeframe('1-2D')" id="tfBtn12D" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white">
+                            <i class="fa-solid fa-calendar-day mr-1"></i> 1–2 วัน
+                        </button>
+                        <button onclick="switchTimeframe('7D')" id="tfBtn7D" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white">
+                            <i class="fa-solid fa-calendar-week mr-1"></i> 7 วัน
+                        </button>
+                    </div>
+                </div>
+
+                <div id="strategyDisplayContent" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <!-- CHART SECTION -->
+            <div class="bg-space-900 rounded-2xl p-6 border border-gray-800 shadow-xl">
+                <div class="flex flex-wrap justify-between items-center mb-3 gap-3">
+                    <div>
+                        <h3 class="text-md font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-chart-candlestick text-cyanAccent"></i> กราฟราคา SPCX Pro Candlestick & Technical Indicators
+                        </h3>
+                        <p class="text-xs text-gray-400">แสดงแนวรับ $156.05, EMA5/10/20, MACD และ RSI 39.28 Real-time Feed</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="toggleChartIndicator('ema')" id="btnToggleEMA" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600/40 text-indigo-200 border border-indigo-500/40 transition">
+                            <i class="fa-solid fa-lines-leaning mr-1"></i> EMA
+                        </button>
+                        <button onclick="resetZoomChart()" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-space-700 hover:bg-space-600 text-cyanAccent transition flex items-center gap-1">
+                            <i class="fa-solid fa-arrows-rotate"></i> Reset View
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-4 mb-3 text-xs font-mono bg-space-950 px-3 py-1.5 rounded-lg border border-gray-800">
+                    <span class="text-cyan-400 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i>EMA5: <span id="ema5Val">157.15</span></span>
+                    <span class="text-yellow-400 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i>EMA10: <span id="ema10Val">157.85</span></span>
+                    <span class="text-purple-400 font-bold"><i class="fa-solid fa-circle text-[8px] mr-1"></i>EMA20: <span id="ema20Val">158.74</span></span>
+                    <span class="border-l border-gray-700 pl-3 text-red-400 font-bold">MACD: <span id="macdVal">-0.85</span></span>
+                    <span class="text-red-300 font-bold">Signal: <span id="macdSignalVal">-0.45</span></span>
+                    <span class="text-amber-400 font-bold">RSI(14): <span id="rsiVal">39.28</span></span>
+                </div>
+
+                <div class="h-[650px] w-full relative">
+                    <canvas id="spcxChart"></canvas>
+                </div>
+            </div>
+
+            <!-- CALCULATOR SECTION -->
+            <div class="bg-space-900 rounded-2xl p-6 border border-gray-800 shadow-xl">
+                <h3 class="text-lg font-extrabold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-cyanAccent"></i> เครื่องมือคำนวณกำไร/ขาดทุน Options กับ Webull Real-Time / Extended
+                </h3>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-6 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 uppercase mb-2">ราคาหุ้นแม่ SPCX ($)</label>
+                                <input type="number" id="calcStockPrice" value="156.85" step="0.1" oninput="calculateOptionsPnL()" class="w-full bg-space-950 border border-cyan-500/50 rounded-xl px-4 py-2 text-sm text-cyanAccent font-extrabold font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 uppercase mb-2">ประเภทสัญญา</label>
+                                <select id="calcOptionType" onchange="calculateOptionsPnL()" class="w-full bg-space-950 border border-gray-700 rounded-xl px-4 py-2 text-sm text-white font-semibold">
+                                    <option value="CALL" selected>CALL Option (มองขึ้น)</option>
+                                    <option value="PUT">PUT Option (มองลง)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 uppercase mb-2">Strike Price ($)</label>
+                                <input type="number" id="calcStrikePrice" value="160" step="0.5" oninput="calculateOptionsPnL()" class="w-full bg-space-950 border border-gray-700 rounded-xl px-4 py-2 text-sm text-white font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-300 uppercase mb-2">Cost Premium ($/หุ้น)</label>
+                                <input type="number" id="calcPremiumCost" value="3.50" step="0.05" oninput="calculateOptionsPnL()" class="w-full bg-space-950 border border-gray-700 rounded-xl px-4 py-2 text-sm text-white font-mono">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-6 bg-space-950 p-5 rounded-2xl border border-gray-800 flex flex-col justify-between">
+                        <div>
+                            <span class="text-xs text-gray-400 uppercase block mb-1">ผลคำนวณคาดการณ์ (PnL):</span>
+                            <div class="flex items-baseline justify-between">
+                                <span id="calcPnlUsd" class="text-3xl font-black text-red-400 font-mono">-$350.00</span>
+                                <span id="calcPnlPercent" class="text-xl font-bold text-red-400 font-mono">(-100.0%)</span>
+                            </div>
+                            <p class="text-xs text-right text-gray-400 mt-2 font-mono">
+                                คิดเป็นเงินไทยประมาณ: <span id="calcPnlThb" class="text-red-400 font-bold">-11,728.50 บาท</span>
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-800 text-[11px] text-gray-400 flex justify-between">
+                            <span>อัตราแลกเปลี่ยน: 1 USD = 33.51 THB</span>
+                            <span class="text-cyan-400 font-semibold">* ปรับเปลี่ยนราคาหุ้นแม่ทดสอบฉากทัศน์ได้สดๆ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tabDocs" class="hidden space-y-6">
+            <div class="bg-space-900 rounded-2xl p-6 border border-gray-800 shadow-xl">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-800 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-book-open-reader text-cyanAccent"></i> คลังรายงานการวิจัยและคู่มือกลยุทธ์ (Interactive Research Hub)
+                        </h2>
+                        <p class="text-xs text-gray-400 mt-1">รวบรวมเอกสารวิเคราะห์ SPCX ทั้งหมดไว้ในระบบเดียว สามารถเลือกอ่านตามบทวิเคราะห์ด้านล่าง</p>
+                    </div>
+                </div>
+
+                <!-- Doc Selector Buttons -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
+                    <button onclick="loadDocContent('actionPlan')" id="docBtn_actionPlan" class="p-3 rounded-xl border border-gray-800 bg-space-950 text-left hover:border-cyan-500/50 transition">
+                        <span class="text-xs font-bold text-cyan-400 block mb-1"><i class="fa-solid fa-list-check mr-1"></i> สรุปแผนปฏิบัติการ</span>
+                        <span class="text-xs text-gray-300 font-semibold line-clamp-1">SPCX Call Action Plan</span>
+                    </button>
+
+                    <button onclick="loadDocContent('audit')" id="docBtn_audit" class="p-3 rounded-xl border border-gray-800 bg-space-950 text-left hover:border-cyan-500/50 transition">
+                        <span class="text-xs font-bold text-red-400 block mb-1"><i class="fa-solid fa-file-invoice-dollar mr-1"></i> Audit ตรวจสอบพอร์ต</span>
+                        <span class="text-xs text-gray-300 font-semibold line-clamp-1">Portfolio P&L Audit (Put $140)</span>
+                    </button>
+
+                    <button onclick="loadDocContent('technical')" id="docBtn_technical" class="p-3 rounded-xl border border-gray-800 bg-space-950 text-left hover:border-cyan-500/50 transition">
+                        <span class="text-xs font-bold text-yellow-400 block mb-1"><i class="fa-solid fa-chart-diagram mr-1"></i> กราฟและแนวรับต้าน</span>
+                        <span class="text-xs text-gray-300 font-semibold line-clamp-1">Technical Mapping & Chart Analysis</span>
+                    </button>
+
+                    <button onclick="loadDocContent('intraday')" id="docBtn_intraday" class="p-3 rounded-xl border border-gray-800 bg-space-950 text-left hover:border-cyan-500/50 transition">
+                        <span class="text-xs font-bold text-emerald-400 block mb-1"><i class="fa-solid fa-clock-rotate-left mr-1"></i> วิเคราะห์ 1-Day Intraday</span>
+                        <span class="text-xs text-gray-300 font-semibold line-clamp-1">"ตอนนี้ลง ควรกด Call เลยไหม?"</span>
+                    </button>
+
+                    <button onclick="loadDocContent('callvsput')" id="docBtn_callvsput" class="p-3 rounded-xl border border-gray-800 bg-space-950 text-left hover:border-cyan-500/50 transition">
+                        <span class="text-xs font-bold text-purple-400 block mb-1"><i class="fa-solid fa-scale-balanced mr-1"></i> เปรียบเทียบ Call vs Put</span>
+                        <span class="text-xs text-gray-300 font-semibold line-clamp-1">Call vs Put Decision Matrix</span>
+                    </button>
+
+                    <button onclick="loadDocContent('sources')" id="docBtn_sources" class="p-3 rounded-xl border border-gray-800 bg-space-950 text-left hover:border-cyan-500/50 transition">
+                        <span class="text-xs font-bold text-indigo-400 block mb-1"><i class="fa-solid fa-database mr-1"></i> แหล่งข้อมูล & API</span>
+                        <span class="text-xs text-gray-300 font-semibold line-clamp-1">Data Sources & Architecture</span>
+                    </button>
+
+                    <button onclick="loadDocContent('altData')" id="docBtn_altData" class="p-3 rounded-xl border border-gray-800 bg-space-950 text-left hover:border-cyan-500/50 transition col-span-2 md:col-span-2">
+                        <span class="text-xs font-bold text-amber-300 block mb-1"><i class="fa-solid fa-satellite mr-1"></i> ข้อมูลเสริม & Overnight Gap</span>
+                        <span class="text-xs text-gray-300 font-semibold line-clamp-1">Alternative Sources & Night Trading Strategy</span>
+                    </button>
+                </div>
+
+                <!-- Document Display Container -->
+                <div id="documentContainer" class="bg-space-950 p-6 rounded-2xl border border-gray-800 prose prose-invert max-w-none text-sm text-gray-300 leading-relaxed min-h-[400px]">
+                    <!-- Injected via JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <div id="tabQuiz" class="hidden space-y-6">
+            <div class="bg-space-900 rounded-2xl p-6 border border-gray-800 shadow-xl">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gray-800 pb-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-graduation-cap text-cyanAccent"></i> แบบทดสอบความรู้ SPCX Options & Technical Analysis Quiz
+                        </h2>
+                        <p class="text-xs text-gray-400 mt-1">ทดสอบและทบทวนความเข้าใจเรื่องสถานะ OTM, Greeks, IV Crush และจุดเข้าเทรดทางเทคนิค</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-bold text-gray-400">คะแนนสะสม: <span id="quizScoreText" class="text-cyanAccent text-base font-extrabold">0 / 10</span></span>
+                        <button onclick="resetQuiz()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-space-700 hover:bg-space-600 text-cyanAccent transition">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> เริ่มทำใหม่
+                        </button>
+                    </div>
+                </div>
+
+                <div id="quizContainer" class="space-y-6">
+                    <!-- Quiz Questions injected dynamically via JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        let showEMA = true;
+        let chartCandles = [];
+        let activePrice = 156.85;
+        let marketMode = 'EXTENDED';
+        let spcxChart = null;
+
+        function switchMainTab(tabName) {
+            document.getElementById('tabTerminal').classList.add('hidden');
+            document.getElementById('tabDocs').classList.add('hidden');
+            document.getElementById('tabQuiz').classList.add('hidden');
+
+            ['Terminal', 'Docs', 'Quiz'].forEach(t => {
+                const btn = document.getElementById(`nav${t}Btn`);
+                if (btn) btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white";
+            });
+
+            if (tabName === 'terminal') {
+                document.getElementById('tabTerminal').classList.remove('hidden');
+                document.getElementById('navTerminalBtn').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md";
+                setTimeout(() => { if (spcxChart) spcxChart.resize(); }, 50);
+            } else if (tabName === 'docs') {
+                document.getElementById('tabDocs').classList.remove('hidden');
+                document.getElementById('navDocsBtn').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md";
+                loadDocContent('actionPlan');
+            } else if (tabName === 'quiz') {
+                document.getElementById('tabQuiz').classList.remove('hidden');
+                document.getElementById('navQuizBtn').className = "px-3.5 py-1.5 rounded-lg text-xs font-bold transition bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md";
+                renderQuiz();
+            }
+        }
+
+        function setMarketMode(mode) {
+            marketMode = mode;
+            const btnReg = document.getElementById('btnModeRegular');
+            const btnExt = document.getElementById('btnModeExtended');
+            const statusLabel = document.getElementById('statusMarketModeLabel');
+            const currentPriceEl = document.getElementById('currentPrice');
+            const priceChangeEl = document.getElementById('priceChange');
+            const sessionNameText = document.getElementById('sessionNameText');
+            const calcStockPrice = document.getElementById('calcStockPrice');
+
+            if (mode === 'REGULAR') {
+                btnReg.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition bg-amber-500/30 text-amber-300 border border-amber-500/40 shadow-md";
+                btnExt.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white";
+                statusLabel.innerText = "สถานะราคา Webull Market Session ($159.31)";
+                currentPriceEl.innerText = "$159.31";
+                priceChangeEl.innerText = "▲ +2.46 (+1.57%)";
+                priceChangeEl.className = "text-sm font-bold text-emerald-400 flex items-center transition-all duration-200";
+                sessionNameText.innerText = "Regular Trading Session";
+                activePrice = 159.31;
+            } else {
+                btnExt.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition bg-indigo-600/50 text-indigo-200 border border-indigo-400/50 shadow-md";
+                btnReg.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white";
+                statusLabel.innerText = "สถานะราคา Webull After-Hours ($156.85)";
+                currentPriceEl.innerText = "$156.85";
+                priceChangeEl.innerText = "▼ -2.46 (-1.54%)";
+                priceChangeEl.className = "text-sm font-bold text-red-400 flex items-center transition-all duration-200";
+                sessionNameText.innerText = "After-Hours Session (Webull)";
+                activePrice = 156.85;
+            }
+
+            if (calcStockPrice) {
+                calcStockPrice.value = activePrice;
+                calculateOptionsPnL();
+            }
+        }
+
+        function generateWebull30mCandles() {
+            const candles = [];
+            let price = 163.0;
+            const now = Date.now();
+            for (let i = 30; i >= 0; i--) {
+                const open = price;
+                const change = (Math.random() - 0.53) * 0.65;
+                const close = parseFloat((open + change).toFixed(2));
+                const high = Math.max(open, close) + parseFloat((Math.random() * 0.35).toFixed(2));
+                const low = Math.min(open, close) - parseFloat((Math.random() * 0.35).toFixed(2));
+                price = close;
+                candles.push({ x: now - i * 60000 * 15, o: open, h: high, l: low, c: close });
+            }
+            candles[candles.length - 1].l = 156.05;
+            candles[candles.length - 1].c = 156.85;
+            chartCandles = candles;
+        }
+
+        function getEmaSeries(period, color) {
+            const data = [];
+            let k = 2 / (period + 1);
+            let ema = chartCandles[0].c;
+            chartCandles.forEach(c => {
+                ema = (c.c * k) + (ema * (1 - k));
+                data.push({ x: c.x, y: parseFloat(ema.toFixed(2)) });
+            });
+            return {
+                type: 'line',
+                label: `EMA ${period}`,
+                data: data,
+                borderColor: color,
+                borderWidth: 1.5,
+                pointRadius: 0,
+                tension: 0.2
+            };
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('spcxChart').getContext('2d');
+            if (spcxChart) spcxChart.destroy();
+
+            const datasets = [{
+                label: 'SPCX Price ($)',
+                data: chartCandles,
+                color: { up: '#00e676', down: '#ff4d4d', unchanged: '#999' }
+            }];
+
+            if (showEMA) {
+                datasets.push(getEmaSeries(5, '#00f2fe'));
+                datasets.push(getEmaSeries(10, '#ffb300'));
+                datasets.push(getEmaSeries(20, '#c084fc'));
+            }
+
+            spcxChart = new Chart(ctx, {
+                type: 'candlestick',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        x: { type: 'time', time: { unit: 'minute' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        function toggleChartIndicator(type) {
+            if (type === 'ema') {
+                showEMA = !showEMA;
+                const btn = document.getElementById('btnToggleEMA');
+                btn.className = showEMA 
+                    ? "px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600/40 text-indigo-200 border border-indigo-500/40 transition" 
+                    : "px-2.5 py-1 rounded-lg text-xs font-semibold bg-space-800 text-gray-500 border border-gray-700 transition";
+            }
+            initChart();
+        }
+
+        function resetZoomChart() { 
+            if (spcxChart) {
+                spcxChart.resetZoom(); 
+                initChart();
+            }
+        }
+
+        function calculateOptionsPnL() {
+            const stockPrice = parseFloat(document.getElementById('calcStockPrice')?.value || activePrice);
+            const optType = document.getElementById('calcOptionType')?.value || 'CALL';
+            const strike = parseFloat(document.getElementById('calcStrikePrice')?.value || 160);
+            const premium = parseFloat(document.getElementById('calcPremiumCost')?.value || 3.50);
+            const fx = 33.51;
+
+            const totalCostUsd = premium * 100;
+            let currentValPerShare = optType === 'PUT' ? Math.max(0.01, strike - stockPrice) : Math.max(0.01, stockPrice - strike);
+            
+            const totalValUsd = currentValPerShare * 100;
+            const pnlUsd = totalValUsd - totalCostUsd;
+            const pnlPercent = (pnlUsd / totalCostUsd) * 100;
+            const pnlThb = pnlUsd * fx;
+
+            const pnlUsdEl = document.getElementById('calcPnlUsd');
+            const pnlPercentEl = document.getElementById('calcPnlPercent');
+            const pnlThbEl = document.getElementById('calcPnlThb');
+
+            if (pnlUsdEl) {
+                pnlUsdEl.innerText = `${pnlUsd >= 0 ? '+' : ''}$${pnlUsd.toFixed(2)}`;
+                pnlUsdEl.className = `text-3xl font-black font-mono ${pnlUsd >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+            if (pnlPercentEl) {
+                pnlPercentEl.innerText = `(${pnlPercent.toFixed(1)}%)`;
+                pnlPercentEl.className = `text-xl font-bold font-mono ${pnlUsd >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+            if (pnlThbEl) {
+                pnlThbEl.innerText = `${pnlThb >= 0 ? '+' : ''}${pnlThb.toLocaleString('th-TH', {minimumFractionDigits: 2})} บาท`;
+                pnlThbEl.className = `font-bold ${pnlThb >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+        }
+
+        function switchTimeframe(tf) {
+            ['1D', '12D', '7D'].forEach(t => {
+                const btn = document.getElementById(`tfBtn${t}`);
+                if (btn) btn.className = t === tf ? "px-3 py-1.5 rounded-lg text-xs font-bold transition bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md" : "px-3 py-1.5 rounded-lg text-xs font-bold transition text-gray-400 hover:text-white";
+            });
+            renderStrategyContent(tf);
+        }
+
+        function renderStrategyContent(tf) {
+            const container = document.getElementById('strategyDisplayContent');
+            if (!container) return;
+
+            if (tf === '1D') {
+                container.innerHTML = `
+                    <div class="bg-space-950 p-4 rounded-xl border border-gray-800">
+                        <span class="text-xs text-amber-400 font-bold uppercase block mb-1">1. สัญญา Put $140</span>
+                        <h4 class="text-sm font-extrabold text-white mb-2">แนะนำ Cut Loss</h4>
+                        <p class="text-xs text-gray-400">แม้ราคาจะย่อลงมา $156.85 แต่ยังสูงกว่า Strike $140 ถึง $16.85 (Deep OTM) ควร Cut Loss เอาทุนคืน</p>
+                    </div>
+                    <div class="bg-space-950 p-4 rounded-xl border border-emerald-500/30">
+                        <span class="text-xs text-emerald-400 font-bold uppercase block mb-1">2. ฝั่ง Call Option</span>
+                        <h4 class="text-sm font-extrabold text-white mb-2">เข้าซื้อโซน $156.05 - $157.15</h4>
+                        <p class="text-xs text-gray-400">สะสม Call Strike $155 / $160 เมื่อเห็นแรงเด้งจากฐาน $156.05 โดย RSI อยู่ที่ 39.28 เสี่ยงต่ำ ลุ้นเด้งทดสอบ $158.74 / $161.70</p>
+                    </div>
+                    <div class="bg-space-950 p-4 rounded-xl border border-cyan-500/30">
+                        <span class="text-xs text-cyan-400 font-bold uppercase block mb-1">3. บริหารความเสี่ยง</span>
+                        <h4 class="text-sm font-extrabold text-white mb-2">Stop Loss $155.00</h4>
+                        <p class="text-xs text-gray-400">หากราคาหลุดแนวรับ $156.05 และทิ้งตัวหลุด $155.00 ให้ตั้ง Stop Loss ทันที</p>
+                    </div>
+                `;
+            } else if (tf === '12D') {
+                container.innerHTML = `
+                    <div class="bg-space-950 p-4 rounded-xl border border-gray-800">
+                        <span class="text-xs text-amber-400 font-bold uppercase block mb-1">1. แนวโน้ม 1-2 วัน</span>
+                        <h4 class="text-sm font-extrabold text-white mb-2">สร้างฐานแนวรับ $156.05</h4>
+                        <p class="text-xs text-gray-400">ราคากำลังสร้างฐาน $156.00 – $157.85 เพื่อดูดซับแรงขายและดึง RSI ให้พ้นโซน Oversold ก่อนทดสอบ $160.00</p>
+                    </div>
+                    <div class="bg-space-950 p-4 rounded-xl border border-emerald-500/30">
+                        <span class="text-xs text-emerald-400 font-bold uppercase block mb-1">2. การเลือกสัญญา</span>
+                        <h4 class="text-sm font-extrabold text-white mb-2">Call Strike $160 (DTE > 7 วัน)</h4>
+                        <p class="text-xs text-gray-400">เน้นสัญญาที่มี DTE เกิน 7 วันขึ้นไป เพื่อทนแกว่งช่วง After-Hours / Pre-Market</p>
+                    </div>
+                    <div class="bg-space-950 p-4 rounded-xl border border-cyan-500/30">
+                        <span class="text-xs text-cyan-400 font-bold uppercase block mb-1">3. เป้าหมายกำไร</span>
+                        <h4 class="text-sm font-extrabold text-white mb-2">Target $159.31 – $163.00</h4>
+                        <p class="text-xs text-gray-400">แบ่งขายทำกำไรเมื่อราคาขึ้นทดสอบแนวต้านตลาดปกติ $159.31 และ $163.00</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="bg-space-950 p-4 rounded-xl border border-gray-800">
+                        <span class="text-xs text-amber-400 font-bold uppercase block mb-1">1. แนวโน้ม 7 วัน</span>
+                        <h4 class="text-sm font-extrabold text-white mb-2">โครงสร้างใหญ่ยังยืน $155+</h4>
+                        <p class="text-xs text-gray-400">การย่อตัวมา $156.05 เป็นเพียงการพักตัวลดความร้อนแรง ยืนเหนือ $155.10 ได้ ภาพรวมยังไม่เสียทรง</p>
+                    </div>
+                    <div class="bg-space-950 p-4 rounded-xl border border-emerald-500/30">
+                        <span class="text-xs text-emerald-400 font-bold uppercase block mb-1">2. กลยุทธ์ถือรันเทรนด์</span>
+                        <h4 class="text-sm font-extrabold text-white mb-2">Call Strike $165 (DTE 14-30 วัน)</h4>
+                        <p class="text-xs text-gray-400">ถือสัญญาระยะยาวเพื่อรอการ Rebound สู่เป้า High เดิม $166.18</p>
+                    </div>
+                    <div class="bg-space-950 p-4 rounded-xl border border-cyan-500/30">
+                        <span class="text-xs text-cyan-400 font-bold uppercase block mb-1">3. เป้าหมายระยะสัปดาห์</span>
+                        <h4 class="text-sm font-extrabold text-white mb-2">Target $166.18 – $170.00</h4>
+                        <p class="text-xs text-gray-400">เป้าหมาย High เดิม $166.18 และทดสอบ $170.00</p>
+                    </div>
+                `;
+            }
+        }
+
+        const docStore = {
+            actionPlan: `
+                <h2 class="text-lg font-extrabold text-cyan-400 border-b border-gray-800 pb-2 mb-4">แผนการบริหารและแอ็กชันเทรด SPCX (อัปเดตสถานะ After-Hours ล่าสุด)</h2>
+                <h3 class="text-sm font-bold text-white mt-4 mb-2">📊 สรุปสภาวะราคาปัจจุบัน ($156.85 / Low $156.05)</h3>
+                <p>การเคลื่อนไหวล่าสุด: ย่อตัวลงมาจากจุดสูงสุด <strong>$166.18</strong> สู่ราคาตลาดปกติ <strong>$159.31</strong> และย่อต่อช่วง After-Hours มาทำจุดต่ำสุดที่ <strong>$156.05</strong> ก่อนฟื้นตัวขึ้นมาที่ <strong>$156.85</strong></p>
+                <ul class="list-disc pl-5 space-y-1 my-3 text-gray-300">
+                    <li><strong>EMA Support:</strong> เส้น EMA5 อยู่ที่ $157.15, EMA10 อยู่ที่ $157.85 และ EMA20 อยู่ที่ $158.74</li>
+                    <li><strong>RSI (14):</strong> ปรับตัวลดลงมาอยู่ที่ <strong>39.28</strong> (ใกล้โซน Oversold) แสดงถึงแรงขายเริ่มชะลอตัว</li>
+                </ul>
+                <h3 class="text-sm font-bold text-white mt-6 mb-2">🎯 สรุปคำแนะนำรายสถานะ</h3>
+                <div class="bg-red-950/30 border border-red-500/40 p-3 rounded-xl mb-3">
+                    <span class="font-bold text-red-400 block">1. สำหรับสัญญา PUT Strike $140:</span>
+                    <p class="text-xs">Deep Out-of-the-Money (OTM) แม้ราคาจะย่อมา $156.85 แต่ราคาหุ้นแม่ยังสูงกว่า Strike $140 ถึง $16.85 <strong>แนะนำ Cut Loss ทันทีเมื่อตลาดเปิด</strong></p>
+                </div>
+                <div class="bg-emerald-950/30 border border-emerald-500/40 p-3 rounded-xl">
+                    <span class="font-bold text-emerald-400 block">2. สำหรับการเข้าเปิดสถานะ CALL OPTION ใหม่ (แนะนำ):</span>
+                    <p class="text-xs">เข้าซื้อ Call Strike $155 หรือ $160 บริเวณแนวรับ $156.00 – $156.85 (RSI 39.28) ซึ่งเป็นโซน Low Risk / High Reward โดยตั้ง Stop Loss หากปิดหลุด $155.00</p>
+                </div>
+            `,
+            audit: `
+                <h2 class="text-lg font-extrabold text-red-400 border-b border-gray-800 pb-2 mb-4">รายงานการตรวจสอบตัวเลขในพอร์ตและการประเมินมูลค่าจริงเมื่อตลาดเปิด (P&L Audit)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 my-4">
+                    <div class="bg-space-900 p-3 rounded-xl border border-gray-800">
+                        <span class="text-xs text-gray-400 block">ต้นทุนรวม (Cost Basis)</span>
+                        <span class="text-base font-bold text-white">$470.00 USD</span>
+                    </div>
+                    <div class="bg-space-900 p-3 rounded-xl border border-gray-800">
+                        <span class="text-xs text-gray-400 block">มูลค่าในแอปปัจจุบัน</span>
+                        <span class="text-base font-bold text-yellow-400">$102.00 USD (~3,418 บาท)</span>
+                    </div>
+                    <div class="bg-space-900 p-3 rounded-xl border border-red-900/50">
+                        <span class="text-xs text-gray-400 block">คาดการณ์เมื่อตลาดเปิด</span>
+                        <span class="text-base font-bold text-red-500">$1.00 – $10.00 USD (-98%)</span>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-400">⚠️ ราคา $1.02 ในแอปพลิเคชันเป็นเพียง Mark Price จากช่วงก่อนหน้า เนื่องจากสัญญา Put $140 อยู่ในสถานะ OTM ลึกมาก เมื่อเปิดตลาดปกติ Bid Price จะปรับเข้าหามูลค่าจริง ($0.01 – $0.10)</p>
+            `,
+            technical: `
+                <h2 class="text-lg font-extrabold text-yellow-400 border-b border-gray-800 pb-2 mb-4">รายงานวิเคราะห์ทางเทคนิคและการตีกราฟราคา SPCX (Technical Analysis)</h2>
+                <div class="font-mono bg-space-900 p-4 rounded-xl border border-gray-800 space-y-2 text-xs">
+                    <div>[ R3: $166.18 ] &lt;-- High เดิม</div>
+                    <div>[ R2: $159.31 - $161.70 ] &lt;-- แนวต้านรีบาวด์</div>
+                    <div>[ R1: $157.15 - $157.85 ] &lt;-- โซน EMA 5 & 10</div>
+                    <div class="text-cyan-400 font-bold">---&gt;&gt;&gt; [ After-Hours: $156.85 ] &lt;&lt;&lt;---</div>
+                    <div class="text-amber-400 font-bold">=== [ S1: $156.05 ] &lt;-- จุด Low ล่าสุด</div>
+                    <div class="text-red-400 font-bold">[ S2: $155.10 ] &lt;-- แนวรับหลักเด็ดขาด (Stop Loss Line)</div>
+                </div>
+            `,
+            intraday: `
+                <h2 class="text-lg font-extrabold text-emerald-400 border-b border-gray-800 pb-2 mb-4">วิเคราะห์เชิงลึก: "ตอนนี้กราฟลง ควร Call เลยไหม?"</h2>
+                <div class="p-4 bg-emerald-950/20 border border-emerald-500/30 rounded-xl mb-4">
+                    <span class="font-bold text-white block mb-1">คำตอบเชิงกลยุทธ์:</span>
+                    <p class="text-xs text-emerald-300">"สามารถเริ่มทยอยสะสม Call ได้บริเวณ $156.05 – $156.85 แต่ควรรอให้เห็นแท่งเทียนเด้งกลับชัดเจน ไม่ควรรีบไล่ราคาเต็มไม้"</p>
+                </div>
+                <p class="text-xs leading-relaxed text-gray-300">การย่อตัวลงมาจาก $163.00 มาที่ $156.05 ถือเป็นการย่อพักฐานเพื่อลดความร้อนแรงของ RSI (จาก 74 ลงมาที่ 39.28) ทำให้ Risk/Reward ของฝั่ง Call ได้เปรียบมากขึ้น โดยเน้นเลือกสัญญา Call Strike $155 / $160 ที่มี DTE เกิน 7 วันขึ้นไป</p>
+            `,
+            callvsput: `
+                <h2 class="text-lg font-extrabold text-purple-400 border-b border-gray-800 pb-2 mb-4">รายงานสรุปแนวโน้มตลาด SPCX และกลยุทธ์ Call vs Put</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-gray-300 border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-800 text-gray-400">
+                                <th class="p-2">กรอบเวลา</th>
+                                <th class="p-2">แนวโน้ม</th>
+                                <th class="p-2">กรอบราคา</th>
+                                <th class="p-2">คำแนะนำกลยุทธ์</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-800">
+                            <tr>
+                                <td class="p-2 font-bold text-cyan-400">1 วัน (Intraday)</td>
+                                <td class="p-2">ย่อเด้ง (Buy on Dip)</td>
+                                <td class="p-2">$156.05 – $159.31</td>
+                                <td class="p-2 text-emerald-400">สะสม Call Strike $155 / $160</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 font-bold text-cyan-400">1 - 2 วัน</td>
+                                <td class="p-2">ตั้งฐานลุ้นเบรค $160</td>
+                                <td class="p-2">$155.10 – $163.00</td>
+                                <td class="p-2 text-emerald-400">ถือ Call Strike $160 (DTE > 7D)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2 font-bold text-cyan-400">7 วัน</td>
+                                <td class="p-2">ขึ้นต่อหา High เดิม</td>
+                                <td class="p-2">$155.00 – $166.18</td>
+                                <td class="p-2 text-emerald-400">ถือรันเทรนด์ Call Strike $165</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `,
+            sources: `
+                <h2 class="text-lg font-extrabold text-indigo-400 border-b border-gray-800 pb-2 mb-4">รายงานที่มาของข้อมูลและการประมวลผล (Data Architecture)</h2>
+                <p class="text-xs leading-relaxed text-gray-300 mb-3">ระบบประมวลผลข้อมูลราคาเรียลไทม์ผ่าน Webull WebSocket API ร่วมกับข้อมูล OPRA Options Chain โดยข้อมูลข่าวสารรวบรวมจาก Bloomberg, SEC EDGAR (Form 8-K / Tender Offer) และประกาศใบอนุญาตจาก FAA</p>
+                <div class="bg-space-900 p-3 rounded-xl border border-gray-800 font-mono text-xs text-cyan-300">
+                    [ Webull API / OPRA ] --&gt; ( Live Price Engine 1s ) --&gt; [ Dashboard Terminal ]<br>
+                    [ Bloomberg / SEC ] --&gt; ( News Aggregator 10m ) --&gt; [ Strategy Decision ]
+                </div>
+            `,
+            altData: `
+                <h2 class="text-lg font-extrabold text-amber-300 border-b border-gray-800 pb-2 mb-4">แหล่งข้อมูลและเครื่องมืออ้างอิงเสริม (Alternative Data Sources)</h2>
+                <ul class="list-disc pl-5 space-y-2 text-xs text-gray-300">
+                    <li><strong>Nasdaq Last Sale (NLS):</strong> ตรวจสอบ Volume การซื้อขายนอกเวลาอย่างเป็นทางการเพื่อป้องกันการเจอหลุมราคา (Slippage)</li>
+                    <li><strong>Blue Ocean ATS / Robinhood 24H:</strong> ติดตามกระแส Order Flow ข้ามคืนของนักลงทุนรายย่อยทั่วโลก</li>
+                    <li><strong>CBOE Options & IV Index:</strong> เฝ้าระวังปรากฏการณ์ <strong>IV Crush</strong> ที่อาจทำให้มูลค่า Time Decay ลดลงอย่างรวดเร็วหลังจบข่าวใหญ่</li>
+                </ul>
+            `
+        };
+
+        function loadDocContent(docKey) {
+            Object.keys(docStore).forEach(k => {
+                const btn = document.getElementById(`docBtn_${k}`);
+                if (btn) btn.className = k === docKey ? "p-3 rounded-xl border border-cyan-500 bg-space-900 text-left transition shadow-lg shadow-cyan-500/10" : "p-3 rounded-xl border border-gray-800 bg-space-950 text-left hover:border-cyan-500/50 transition";
+            });
+            const container = document.getElementById('documentContainer');
+            if (container) container.innerHTML = docStore[docKey] || "<p>ไม่พบเอกสาร</p>";
+        }
+
+        const quizQuestions = [
+            { question: "1. สถานะสัญญา SPCX Put Strike $140.00 เมื่อราคาหุ้นแม่ SPCX อยู่ที่ $156.85 ถือว่าเป็นสถานะแบบใด?", options: ["In the Money (ITM)", "At the Money (ATM)", "Out of the Money (OTM)", "Deep ITM"], answer: 2, explain: "เพราะราคาหุ้นแม่ ($156.85) อยู่สูงกว่า Strike ($140.00) ทำให้สัญญานี้ไม่มีมูลค่าที่แท้จริง (Intrinsic Value = 0) จึงเป็น OTM" },
+            { question: "2. หากคุณซื้อสัญญา Put Strike $140 ที่ Premium $4.70 จุดเท่าทุน (Breakeven Price) ณ วันหมดอายุคือเท่าใด?", options: ["$144.70", "$135.30", "$140.00", "$156.85"], answer: 1, explain: "ฝั่ง Put จุดเท่าทุน = Strike Price - Premium ($140.00 - $4.70 = $135.30)" },
+            { question: "3. เหตุใดราคา Put $140 ในแอปช่วงตลาดปิดที่ $1.02 จึงอาจลดลงเหลือ $0.01 เมื่อตลาดเปิดทำการปกติ?", options: ["แอปพลิเคชันคำนวณผิด", "เป็น Mark Price เก่า และเมื่อเปิดตลาด Bid Price จะปรับลงตามสถานะ OTM ลึก", "อัตราแลกเปลี่ยน THB/USD ลดลง", "เกิดจากหุ้นถูก Halted"], answer: 1, explain: "ราคาช่วงตลาดปิดมักอ้างอิง Last Traded Price เก่า เมื่อตลาดเปิด Bid Price จะถูก Re-price เข้าหาสภาพคล่องจริง" },
+            { question: "4. ตัวแปรกรีก (Greeks) ชนิดใดที่ส่งผลกระทบเชิงลบต่อมูลค่าสัญญา Options เมื่อเวลาผ่านไปในแต่ละวัน?", options: ["Delta", "Gamma", "Theta", "Vega"], answer: 2, explain: "Theta คือค่าเสื่อมเวลา (Time Decay) ซึ่งจะกัดกร่อนมูลค่าสัญญาลงเรื่อยๆ ในทุกๆ วัน" },
+            { question: "5. หากเส้นค่าเฉลี่ยเรียงตัว EMA 5 ($157.15) > EMA 10 ($157.85) > EMA 20 ($158.74) สภาวะทางเทคนิคเรียกว่าอย่างไร?", options: ["Bullish Alignment", "Bearish Alignment", "Sideway Trap", "Oversold Bounce"], answer: 1, explain: "การที่เส้นค่าเฉลี่ยระยะสั้นอยู่สูงกว่าระยะยาว บ่งชี้ถึงแนวโน้มขาขึ้นแข็งแกร่ง (Bullish Alignment)" },
+            { question: "6. ปรากฏการณ์ 'IV Crush' มักเกิดขึ้นเมื่อใด?", options: ["ก่อนข่าวประกาศ 1 สัปดาห์", "หลังเหตุการณ์สำคัญสิ้นสุดลง ทำให้ Implied Volatility ลดลงอย่างรวดเร็ว", "เมื่อราคาหุ้นอยู่นิ่งๆ ไม่เคลื่อนไหว", "เมื่อเกิด Short Squeeze"], answer: 1, explain: "เมื่อความตื่นตระหนกหรือความไม่แน่นอนหลังประกาศข่าวหมดไป IV จะดิ่งลงอย่างรวดเร็ว ส่งผลให้ Premium ย่อตัวลง" },
+            { question: "7. จังหวะเข้าซื้อ Call Option แบบ 'Buy on Dip' ที่ได้เปรียบที่สุดคือเมื่อใด?", options: ["เมื่อ RSI ทะลุ 70 (Overbought)", "เมื่อราคาย่อตัวลงมาทดสอบแนวรับสำคัญและ RSI ชะลอตัวในโซน Oversold", "เมื่อราคาทำ All-Time High", "เมื่อเกิด Gap Down หลุดแนวรับหลัก"], answer: 1, explain: "การเข้าซื้อเมื่อราคาย่อมาหาแนวรับร่วมกับ RSI ที่ชะลอตัว ช่วยลดความเสี่ยงจากการเข้าซื้อที่จุดยอด" },
+            { question: "8. กำหนดการ Lock-up Expiry (การปลดล็อกหุ้นห้ามขาย) มักสร้างความเสี่ยงประเภทใดในระยะสั้น?", options: ["ความเสี่ยงด้านการขึ้นภาษี", "ความเสี่ยงด้านอุปทานส่วนเกิน (Supply Pressure) จากการขายของหุ้นเดิม", "ทำให้ค่า Theta เพิ่มขึ้น", "ทำให้ Dividend Yield ลดลง"], answer: 1, explain: "การปลดล็อกหุ้นทำให้มีปริมาณหุ้นหมุนเวียนในตลาดมากขึ้น อาจเกิดแรงเทขายกดดันราคาในระยะสั้น" },
+            { question: "9. ทำไมการตรวจสอบ Volume ในช่วง After-Hours จึงมีความสำคัญก่อนตัดสินใจเทรด?", options: ["เพราะ Volume นอกเวลามักเบาบาง ทำให้เกิดราคาหลอก (Spike) และ Slippage สูง", "เพราะ Volume นอกเวลาคิดภาษีแพงกว่า", "เพราะใช้คำนวณ RSI ไม่ได้", "เพราะตลาดเปิดเฉพาะหุ่นยนต์เทรด"], answer: 0, explain: "ช่วง After-Hours สภาพคล่องจะต่ำ การเคาะซื้อขายเพียงไม่กี่สัญญาก็อาจทำให้ราคาพุ่งหรือดิ่งหลอกตาได้" },
+            { question: "10. หากต้องการลดผลกระทบจากค่าเสื่อมเวลา (Theta Decay) เมื่อต้องการถือ Call ข้ามสัปดาห์ ควรเลือกสัญญาแบบใด?", options: ["เลือกสัญญา 0 DTE (หมดอายุวันเดียวกัน)", "เลือกสัญญาที่มี DTE ยาวขึ้น (เช่น 14 - 30 วันขึ้นไป)", "เลือกสัญญา Deep OTM", "เลือกสัญญา Short Call"], answer: 1, explain: "สัญญายิ่งมี DTE ยาว อัตราการลดลงของ Theta Decay ต่อวันจะช้ากว่าสัญญาที่ใกล้หมดอายุ" }
+        ];
+
+        let userAnswers = new Array(quizQuestions.length).fill(null);
+
+        function renderQuiz() {
+            const container = document.getElementById('quizContainer');
+            if (!container) return;
+
+            let html = '';
+            quizQuestions.forEach((q, idx) => {
+                const isAnswered = userAnswers[idx] !== null;
+                html += `
+                    <div class="bg-space-950 p-5 rounded-2xl border ${isAnswered ? (userAnswers[idx] === q.answer ? 'border-emerald-500/50' : 'border-red-500/50') : 'border-gray-800'} space-y-3">
+                        <h4 class="text-sm font-bold text-white">${q.question}</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            ${q.options.map((opt, optIdx) => {
+                                let btnStyle = "bg-space-900 border-gray-800 text-gray-300 hover:border-cyan-500/50";
+                                if (isAnswered) {
+                                    if (optIdx === q.answer) btnStyle = "bg-emerald-950 border-emerald-500 text-emerald-300 font-bold";
+                                    else if (optIdx === userAnswers[idx]) btnStyle = "bg-red-950 border-red-500 text-red-300 font-bold";
+                                    else btnStyle = "bg-space-900 border-gray-800 text-gray-500 opacity-50";
+                                }
+                                return `
+                                    <button onclick="answerQuestion(${idx}, ${optIdx})" ${isAnswered ? 'disabled' : ''} class="p-3 rounded-xl border text-left text-xs transition flex items-center justify-between ${btnStyle}">
+                                        <span>${opt}</span>
+                                        ${isAnswered && optIdx === q.answer ? '<i class="fa-solid fa-circle-check text-emerald-400 ml-2"></i>' : ''}
+                                        ${isAnswered && optIdx === userAnswers[idx] && optIdx !== q.answer ? '<i class="fa-solid fa-circle-xmark text-red-400 ml-2"></i>' : ''}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                        ${isAnswered ? `
+                            <div class="p-3 rounded-xl bg-space-900 text-xs text-gray-300 border border-gray-800 mt-2">
+                                <span class="font-bold text-cyan-400 block mb-0.5"><i class="fa-solid fa-lightbulb mr-1"></i> คำอธิบาย:</span>
+                                ${q.explain}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+            updateQuizScore();
+        }
+
+        function answerQuestion(qIdx, optIdx) {
+            userAnswers[qIdx] = optIdx;
+            renderQuiz();
+        }
+
+        function updateQuizScore() {
+            let score = 0;
+            userAnswers.forEach((ans, idx) => {
+                if (ans === quizQuestions[idx].answer) score++;
+            });
+            const scoreEl = document.getElementById('quizScoreText');
+            if (scoreEl) scoreEl.innerText = `${score} / ${quizQuestions.length}`;
+        }
+
+        function resetQuiz() {
+            userAnswers = new Array(quizQuestions.length).fill(null);
+            renderQuiz();
+        }
+
+        window.onload = function () {
+            generateWebull30mCandles();
+            initChart();
+            calculateOptionsPnL();
+            switchTimeframe('1D');
+        };
+    </script>
+</body>
+</html>
