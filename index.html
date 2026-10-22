@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPCX Pure Signal Terminal</title>
+    <title>SPCX Pure Signal Terminal - Pre/Post Market Sync</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -27,8 +27,8 @@
     </script>
     <style>
         body { font-family: 'Kanit', 'Inter', sans-serif; background-color: #07090E; color: #E2E8F0; }
-        .glow-red { box-shadow: 0 0 30px rgba(255, 77, 77, 0.25); }
-        .glow-green { box-shadow: 0 0 30px rgba(0, 230, 118, 0.25); }
+        .glow-red { box-shadow: 0 0 35px rgba(255, 77, 77, 0.3); }
+        .glow-green { box-shadow: 0 0 35px rgba(0, 230, 118, 0.3); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-center py-10">
@@ -42,13 +42,13 @@
                     <i class="fa-solid fa-satellite"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg font-extrabold text-white">SPCX Signal AI <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Live Auto</span></h1>
-                    <p class="text-xs text-gray-400">ระบบดึงราคาจริง และแนะนำ Call/Put อัตโนมัติ</p>
+                    <h1 class="text-lg font-extrabold text-white">SPCX Signal AI <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">Pre/Post Market Live</span></h1>
+                    <p class="text-xs text-gray-400">ระบบดึงราคาจริงก่อนเปิด/หลังปิดตลาด + แนะนำ Call/Put อัตโนมัติ</p>
                 </div>
             </div>
             <div class="flex items-center px-3 py-1.5 rounded-xl bg-space-950 border border-gray-800 text-xs text-gray-400">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping mr-2"></span>
-                <span id="syncText" class="text-emerald-400 font-bold">Auto Sync</span>
+                <span id="syncText" class="text-emerald-400 font-bold">Auto Syncing</span>
             </div>
         </div>
 
@@ -60,7 +60,7 @@
                         <span id="signalTag" class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                             <i class="fa-solid fa-circle-dot mr-1 animate-pulse"></i> สัญญาณอัตโนมัติ
                         </span>
-                        <span class="text-xs text-gray-400" id="lastSyncTime">ซิงค์ล่าสุด: กำลังโหลด...</span>
+                        <span class="text-xs text-gray-400" id="lastSyncTime">ซิงค์ล่าสุด: กำลังเชื่อมต่อ...</span>
                     </div>
                     <h2 id="signalTitle" class="text-3xl font-black text-white">กำลังดึงราคาและคำนวณสัญญาณ...</h2>
                     <p id="signalDesc" class="text-sm text-gray-300 max-w-xl leading-relaxed">
@@ -85,8 +85,8 @@
             <!-- LIVE PRICE -->
             <div class="bg-space-900 rounded-2xl p-6 border border-gray-800 space-y-2">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-chart-line text-cyanAccent mr-1.5"></i> ราคาหุ้นแม่ปัจจุบัน</span>
-                    <span class="text-[10px] px-2 py-0.5 rounded bg-space-800 text-cyan-300 font-mono">NASDAQ:SPCX</span>
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-chart-line text-cyanAccent mr-1.5"></i> ราคาปัจจุบัน (Pre/Post)</span>
+                    <span class="text-[10px] px-2 py-0.5 rounded bg-space-800 text-cyan-300 font-mono" id="marketStateTag">NASDAQ:SPCX</span>
                 </div>
                 <div class="text-4xl font-black text-cyanAccent font-mono pt-2" id="autoLivePriceDisplay">Loading...</div>
                 <p class="text-xs text-gray-400 border-t border-gray-800 pt-3 mt-2" id="autoPriceNote">
@@ -122,11 +122,11 @@
     </main>
 
     <script>
-        let currentFetchedPrice = 159.31;
+        let currentFetchedPrice = 154.51;
 
         async function fetchLivePrice() {
             try {
-                const targetUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/SPCX?interval=1m&range=1d';
+                const targetUrl = 'https://query1.finance.yahoo.com/v8/finance/chart/SPCX?interval=1m&range=1d&includePrePost=true';
                 const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
                 const response = await fetch(proxyUrl);
@@ -135,7 +135,13 @@
 
                 if (data && data.chart && data.chart.result && data.chart.result[0]) {
                     const meta = data.chart.result[0].meta;
-                    currentFetchedPrice = parseFloat(meta.regularMarketPrice || meta.chartPreviousClose || 159.31);
+                    
+                    // ดึงราคา Pre-market หรือ Post-market ถ้ามี ถ้าไม่มีค่อยใช้ Regular Price
+                    let price = meta.preMarketPrice || meta.postMarketPrice || meta.regularMarketPrice || meta.chartPreviousClose || 154.51;
+                    
+                    currentFetchedPrice = parseFloat(price);
+                    
+                    document.getElementById('marketStateTag').innerText = meta.preMarketPrice ? 'Pre-Market' : (meta.postMarketPrice ? 'After-Hours' : 'Regular');
                     document.getElementById('syncText').innerText = "Live Syncing";
                     document.getElementById('lastSyncTime').innerText = `ซิงค์ล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
                 }
@@ -159,10 +165,10 @@
                 // Bearish (PUT)
                 banner.className = "bg-gradient-to-r from-space-900 via-space-800 to-space-900 rounded-3xl p-8 border-2 border-red-500/60 glow-red relative overflow-hidden transition-all duration-300";
                 signalTitle.innerText = "คำแนะนำหลัก: PUT OPTION (ราคาหลุดแนวรับ EMA20)";
-                signalDesc.innerText = `ราคาปัจจุบันอยู่ที่ $${stockPrice.toFixed(2)} หลุดแนวรับสำคัญ $154.91 โครงสร้างขาขึ้นเสียทรง มีโอกาสไหลลงหา $152.00 และ $150.00`;
+                signalDesc.innerText = `ราคาล่าสุด $${stockPrice.toFixed(2)} หลุดแนวรับสำคัญ $154.91 โครงสร้างเสียทรง มีโอกาสไหลลงหา $152.00 และ $150.00`;
                 signalText.innerText = "PUT (Bearish)";
                 signalText.className = "text-2xl font-black text-red-400";
-                scoreCircle.innerText = "70%";
+                scoreCircle.innerText = "75%";
                 scoreCircle.className = "w-20 h-20 rounded-full border-4 border-red-500 flex items-center justify-center text-2xl font-black text-red-400 font-mono shadow-lg shadow-red-500/20";
                 
                 document.getElementById('cardTargetZone').innerText = "$152.00 / $150.00";
@@ -172,7 +178,7 @@
                 // Bullish (CALL)
                 banner.className = "bg-gradient-to-r from-space-900 via-space-800 to-space-900 rounded-3xl p-8 border-2 border-emerald-500/60 glow-green relative overflow-hidden transition-all duration-300";
                 signalTitle.innerText = "คำแนะนำหลัก: CALL OPTION (ประคองตัวเหนือแนวรับ)";
-                signalDesc.innerText = `ราคาปัจจุบันอยู่ที่ $${stockPrice.toFixed(2)} ยืนเหนือแนวรับหลัก EMA20 ($154.91) ได้ดี มีโอกาสดีดตัวรีบาวด์ทดสอบ $165.00`;
+                signalDesc.innerText = `ราคาล่าสุด $${stockPrice.toFixed(2)} ยืนเหนือแนวรับหลัก EMA20 ($154.91) ได้ดี มีโอกาสดีดตัวรีบาวด์ทดสอบ $165.00`;
                 signalText.innerText = "CALL (Bullish)";
                 signalText.className = "text-2xl font-black text-emerald-400";
                 scoreCircle.innerText = "75%";
@@ -186,7 +192,7 @@
 
         window.onload = function () {
             fetchLivePrice();
-            setInterval(fetchLivePrice, 15000); // ดึงราคาอัตโนมัติทุก 15 วินาที
+            setInterval(fetchLivePrice, 10000); // ดึงราคาอัตโนมัติทุกๆ 10 วินาที
         };
     </script>
 </body>
